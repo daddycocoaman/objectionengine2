@@ -7,6 +7,7 @@ import pytest
 from objectionengine2.beans.comment import Comment
 from objectionengine2.renderer import render_comment_list
 from objectionengine2.utils import ensure_assets_are_available
+from objectionengine2.loading import ASSETS_FOLDER
 from tests.test_render_movie import probe
 
 pytestmark = pytest.mark.asset_integration
@@ -17,7 +18,7 @@ def test_render_comment_list_with_real_assets(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(repository)
     ensure_assets_are_available()
 
-    assets = repository / "assets"
+    assets = Path(ASSETS_FOLDER)
     required = [
         assets / "characters" / "phoenix" / "phoenix-normal-idle.gif",
         assets / "music" / "pwr",

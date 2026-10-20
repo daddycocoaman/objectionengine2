@@ -8,7 +8,9 @@ The distribution, repository, and Python import are all named `objectionengine2`
 
 - Python 3.10 through 3.14
 - FFmpeg and `ffprobe` on `PATH`
-- The Objection Engine asset pack. The renderer downloads it to the ignored `assets/` directory on first use if it is absent. Keep that directory when running offline.
+- The Objection Engine asset pack. The renderer downloads it on first use into
+  the user cache directory selected by `platformdirs` for `objectionengine2`.
+  An existing complete `./assets/` pack is copied there on first use.
 
 ## Install
 
@@ -18,7 +20,7 @@ From a clone, sync the locked environment with `uv`:
 uv sync --python 3.14 --locked
 ```
 
-The package supports Python 3.10–3.14; `.python-version` selects 3.14 by default. To enable Hugging Face sentiment, add `--extra sentiment` to the run command, for example `uv run --locked --extra sentiment python examples/example_easy.py`. This downloads a model on first use. The base installation does not need a model.
+The package supports Python 3.10–3.14; `.python-version` selects 3.14 by default. To enable Hugging Face sentiment, add `--extra sentiment` to the run command, for example `uv run --locked --extra sentiment python examples/example_easy.py`. This downloads a model on first use into the same user cache under `models/`. The base installation does not need a model. Find the cache location with `uv run python -c 'from objectionengine2.cache import cache_path; print(cache_path())'`.
 
 ## Render comments
 
@@ -33,7 +35,7 @@ comments = [
 render_comment_list(comments, output_filename="outputs/output.mp4")
 ```
 
-Run `uv run python examples/example_easy.py` from the repository root for a complete example. Additional scene, XML, and casting examples are in `examples/`; reference documentation is in `docs/`. Pass an `output_filename` in an existing directory. Asset paths are currently relative to the working directory, so run from the repository root or a directory containing `assets/`.
+Run `uv run python examples/example_easy.py` from the repository root for a complete example. Additional scene, XML, and casting examples are in `examples/`; reference documentation is in `docs/`. Pass an `output_filename` in an existing directory. Scripts with literal `assets/...` paths still need a local asset directory; generated comment dialogue uses the user cache.
 
 ## Sentiment settings
 
@@ -47,19 +49,23 @@ The Docker image uses Python 3.14 and includes FFmpeg. Build and run the include
 
 ```bash
 podman build -t objectionengine2 .
+podman volume create objectionengine2-cache
 podman run --rm \
-  --mount type=bind,src="$(pwd)/assets",dst=/app/assets \
+  --mount type=volume,src=objectionengine2-cache,dst=/root/.cache/objectionengine2 \
   --mount type=bind,src="$(pwd)/outputs",dst=/app/outputs \
   objectionengine2
 ```
 
-The result is `outputs/output.mp4`. Ensure `assets/` and `outputs/` exist before running; the image downloads the assets into the mounted directory if it is empty. To run your own script, mount it at `/app/render.py` and add `render.py` after the image name. Have the script write into `outputs/`.
+The result is `outputs/output.mp4`. Ensure `outputs/` exists before running;
+the image saves downloaded assets and models in the mounted cache volume.
+To run your own script, mount it at `/app/render.py` and add `render.py` after
+the image name. Have the script write into `outputs/`.
 
 ## Tests
 
 `uv sync --locked` installs the default `dev` group, including pytest. Run `uv run --locked pytest -q` for offline tests. They generate their own small media inputs and require FFmpeg and `ffprobe` but do not download assets or models.
 
-For a complete courtroom smoke test, run `uv run --locked pytest -q -m asset_integration`. The test calls `ensure_assets_are_available()` from `objectionengine2.utils` first, which downloads the pack into `assets/` if it is absent. Keep the pack to avoid downloading it again on later runs.
+For a complete courtroom smoke test, run `uv run --locked pytest -q -m asset_integration`. The test calls `ensure_assets_are_available()` from `objectionengine2.utils` first, which populates the platform cache if needed. Keep that cache to avoid downloading the pack again.
 
 ## Contributing
 

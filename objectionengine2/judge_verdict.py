@@ -17,7 +17,7 @@ VERDICT_COLORS = {
     "white": {"fill": (255, 255, 255), "stroke": (0, 0, 0)},
 }
 
-VERDICT_FONT_PATH = f"./{ASSETS_FOLDER}/verdict/DFMinchoStd-W12.otf"
+VERDICT_FONT_PATH = f"{ASSETS_FOLDER}/verdict/DFMinchoStd-W12.otf"
 
 
 class JudgeVerdictTextObject(SceneObject):

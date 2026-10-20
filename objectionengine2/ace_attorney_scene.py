@@ -41,6 +41,9 @@ from os.path import exists, join
 from shlex import split
 from math import cos, sin, pi
 from random import random
+from pathlib import Path
+
+from .cache import models_path
 
 from .utils import ensure_assets_are_available
 
@@ -307,7 +310,8 @@ class ExclamationObject(ImageObject):
 
     def play_exclamation(self, type: str, speaker: str):
         self.set_filepath(
-            f"assets/exclamations/{type}.gif", {0.7: lambda: self.set_filepath(None)}
+            join(ASSETS_FOLDER, "exclamations", f"{type}.gif"),
+            {0.7: lambda: self.set_filepath(None)},
         )
 
         audio_path = self.get_exclamation_path(type, speaker)
@@ -665,7 +669,7 @@ class AceAttorneyDirector(Director):
 
                     elif c == "sprite":
                         position = action_split[1]
-                        path = action_split[2]
+                        path = " ".join(action_split[2:])
 
                         if not exists(path):
                             print(f"Error in sprite command \"{action_split}\": sprite \"{path}\" doesn't exist")
@@ -1095,9 +1099,9 @@ class AceAttorneyDirector(Director):
 
 
 def get_sprite_location(character: str, emotion: str):
-    return join(
+    return Path(
         ASSETS_FOLDER, CHARACTERS_FOLDER, character, f"{character}-{emotion}.gif"
-    )
+    ).as_posix()
 
 
 def get_sprite_tag(location: str, character: str, emotion: str):
@@ -1133,10 +1137,13 @@ class DialogueBoxBuilder:
                     "uv run --extra sentiment <command>"
                 ) from exc
             environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+            model_cache = models_path()
+            model_cache.mkdir(parents=True, exist_ok=True)
             self._sentiment_analyzer = pipeline(
                 "sentiment-analysis",
                 model=SENTIMENT_MODEL_PATH,
                 tokenizer=SENTIMENT_MODEL_PATH,
+                model_kwargs={"cache_dir": str(model_cache)},
             )
         elif self.sentiment_mode != "neutral":
             raise ValueError(
@@ -1423,7 +1430,7 @@ class DialogueBoxBuilder:
             DialoguePage(
                 [
                     DialogueAction(
-                        f"sprite left {ASSETS_FOLDER}/characters/phoenix/phoenix-normal-idle.gif",
+                        f"sprite left {Path(ASSETS_FOLDER, 'characters', 'phoenix', 'phoenix-normal-idle.gif').as_posix()}",
                         0,
                     ),
                     DialogueAction(f"music start {self.relaxed_track}", 0),

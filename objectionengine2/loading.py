@@ -7,8 +7,9 @@ from PIL import Image, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from rich import print
+from .cache import assets_path
 
-ASSETS_FOLDER = "assets"
+ASSETS_FOLDER = str(assets_path())
 CHARACTERS_FOLDER = "characters"
 MUSIC_FOLDER = "music"
 

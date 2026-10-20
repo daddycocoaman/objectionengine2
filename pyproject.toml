@@ -21,6 +21,7 @@ dependencies = [
     "numpy>=2.2,<3",
     "rich>=14,<16",
     "requests>=2.32,<3",
+    "platformdirs>=4.4,<5",
     "toml>=0.10.2,<0.11",
 ]
 

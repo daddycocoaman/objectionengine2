@@ -1,67 +1,94 @@
-from .loading import load_music_data
-from collections import Counter
-import os
-import requests
-import zipfile
+"""Asset downloads and small helpers for render configuration."""
+
+from pathlib import Path, PurePosixPath
+from stat import S_ISLNK
+from tempfile import TemporaryDirectory
 import shutil
-import json
-from toml import dump
+import zipfile
 
-def ensure_assets_are_available():
-    if not os.path.exists('assets') or not os.listdir('assets'):
-        download_assets()
-        os.remove('assets.zip')
+import requests
+
+from .loading import ASSETS_FOLDER, load_music_data
+
+_ASSETS_URL = "https://dl.luismayo.com/assetsv4.zip"
+
+
+def _assets_complete(folder: Path) -> bool:
+    return (
+        (folder / "characters" / "phoenix" / "phoenix-normal-idle.gif").is_file()
+        and (folder / "music" / "pwr").is_dir()
+        and (folder / "textbox").is_dir()
+    )
+
+
+def _install_assets(populate) -> None:
+    """Prepare a complete pack inside the cache, then replace the active pack."""
+    destination = Path(ASSETS_FOLDER)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix=".assets-", dir=destination.parent) as temporary:
+        temporary_path = Path(temporary)
+        staged = temporary_path / "assets"
+        populate(staged)
+        if not _assets_complete(staged):
+            raise RuntimeError("The asset pack is incomplete")
+        backup = temporary_path / "previous-assets"
+        had_previous = destination.exists() or destination.is_symlink()
+        if had_previous:
+            destination.replace(backup)
+        try:
+            staged.replace(destination)
+        except OSError:
+            if had_previous:
+                backup.replace(destination)
+            raise
+
+
+def ensure_assets_are_available() -> None:
+    """Populate the platform cache, reusing a complete legacy local pack."""
+    destination = Path(ASSETS_FOLDER)
+    if _assets_complete(destination):
+        return
+    legacy = Path.cwd() / "assets"
+    if legacy.resolve() != destination.resolve() and _assets_complete(legacy):
+        _install_assets(lambda staged: shutil.copytree(legacy, staged))
     else:
-        # This is in case there are only some missing assets that have been added in updates
-        detect_old_assets_format()
-
-def download_assets():
-    print('Assets not present. Downloading them')
-    response = requests.get('https://dl.luismayo.com/assetsv4.zip')
-    with open('assets.zip', 'wb') as file:
-        file.write(response.content)
-    with zipfile.ZipFile('assets.zip', 'r') as zip_ref:
-        zip_ref.extractall('assets')
-
-def detect_old_assets_format():
-    if os.path.exists('./Sprites-phoenix'):
-        print("Old assets format detected. Moving assets folder to assets_old")
-        os.rename("./assets", "./assets_old")
         download_assets()
-        print("Migrating music (if any) to the new assets folder with the new assets config")
-        for music_folder in os.listdir("./assets_old/music"):
-            if not os.path.exists("./assets/music/" + music_folder):
-                print("Migrating " + music_folder)
-                try:
-                    shutil.copytree("./assets_old/music/" + music_folder, "./assets/music/" + music_folder)
-                except Exception as e:
-                    print("Error while copying" + str(e))
-                    continue
-                try:
-                    with open("./assets/music/" + music_folder + "/config.json",'rt') as file_json:
-                        old_config = json.load(file_json)
-                        with open("./assets/music/" + music_folder + "/config.toml",'wt') as file_toml:
-                            dump(old_config, file_toml)
-                except Exception as e:
-                    print("Error trying to convert the music format config file. Removing the folder")
-                    try:
-                        shutil.rmtree("./assets/music/" + music_folder)
-                    except Exception as e2:
-                        print("Error while trying to remove the folder. Music may be corrupted")
-            else:
-                print("Folder " + music_folder + " already existed on destination, omiting migration")
 
-def get_all_music_available():
+
+def download_assets() -> None:
+    """Download the asset pack into the platform cache."""
+    print("Assets not present in cache. Downloading them")
+
+    def populate(staged: Path) -> None:
+        archive_path = staged.parent / "assets.zip"
+        response = requests.get(_ASSETS_URL, stream=True, timeout=120)
+        try:
+            response.raise_for_status()
+            with archive_path.open("wb") as archive_file:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    archive_file.write(chunk)
+        finally:
+            response.close()
+        with zipfile.ZipFile(archive_path) as archive:
+            for item in archive.infolist():
+                entry = PurePosixPath(item.filename)
+                if (
+                    entry.is_absolute()
+                    or ".." in entry.parts
+                    or "\\" in item.filename
+                    or ":" in item.filename
+                    or S_ISLNK(item.external_attr >> 16)
+                ):
+                    raise ValueError(f"Unsafe path in asset archive: {item.filename!r}")
+            archive.extractall(staged)
+
+    _install_assets(populate)
+
+
+def get_all_music_available() -> list[str]:
     ensure_assets_are_available()
-    available_music = load_music_data()
-    list = []
-    for key in available_music.keys():
-        list.append(key)
-    list.append('rnd')
-    return list
+    return [*load_music_data().keys(), "rnd"]
+
 
 def is_music_available(music: str) -> bool:
-    music = music.lower()
-    available_music = get_all_music_available()
-    available_music.append('rnd')
-    return music in available_music
+    return music.lower() in get_all_music_available()
