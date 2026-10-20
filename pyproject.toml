@@ -1,0 +1,50 @@
+[project]
+name = "objectionengine2"
+version = "3.5.1"
+description = "Independent continuation of Objection Engine for rendering Ace Attorney scenes"
+readme = "README.md"
+requires-python = ">=3.10,<3.15"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Luis Mayo Valbuena", email = "luismayovalbuena@outlook.es" },
+    { name = "Malcolm Anderson", email = "malcolminyo@gmail.com" },
+]
+dependencies = [
+    "Pillow>=10.4,<13",
+    "pydub>=0.25.1,<0.26",
+    "audioop-lts>=0.2.2,<0.3; python_version >= '3.13'",
+    "ffmpeg-python>=0.2,<0.3",
+    "spacy>=3.8.16,<3.9",
+    "opencv-python-headless>=4.14,<5",
+    "fonttools>=4.60,<5",
+    "numpy>=2.2,<3",
+    "rich>=14,<16",
+    "requests>=2.32,<3",
+    "toml>=0.10.2,<0.11",
+]
+
+[project.urls]
+Original = "https://github.com/LuisMayo/objection_engine"
+
+[project.optional-dependencies]
+sentiment = [
+    "transformers>=4.55,<6",
+    "torch>=2.8,<3",
+    "sentencepiece>=0.2,<0.3",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.4,<10"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not asset_integration'"
+markers = ["asset_integration: downloads the asset pack on first run"]
+
+[build-system]
+requires = ["uv_build>=0.12.4,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "objectionengine2"
+module-root = ""
