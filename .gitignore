@@ -26,3 +26,5 @@ docker-entrypoint.py
 .DS_Store
 .idea
 test_outputs
+outputs/
+output-*.mp4
