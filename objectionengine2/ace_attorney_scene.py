@@ -84,7 +84,7 @@ def pan_probability(x: float) -> float:
     )
 
 
-SENTIMENT_MODEL_PATH = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+SENTIMENT_MODEL_PATH = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 
 # Maximum allowed width of a line of text
 MAX_WIDTH = 220

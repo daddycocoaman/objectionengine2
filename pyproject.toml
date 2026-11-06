@@ -1,6 +1,6 @@
 [project]
 name = "objectionengine2"
-version = "1.0.0"
+version = "1.0.1"
 description = "Independent continuation of Objection Engine for rendering Ace Attorney scenes"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
