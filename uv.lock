@@ -1250,7 +1250,7 @@ wheels = [
 
 [[package]]
 name = "objectionengine2"
-version = "1.0.2"
+version = "1.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "audioop-lts", marker = "python_full_version >= '3.13'" },
