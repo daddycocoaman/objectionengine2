@@ -10,7 +10,7 @@ import requests
 
 from .loading import ASSETS_FOLDER, load_music_data
 
-_ASSETS_URL = "https://dl.luismayo.com/assetsv4.zip"
+_ASSETS_URL = "https://dcmdevassets.blob.core.windows.net/data/oe-assetsv4.zip"
 
 
 def _assets_complete(folder: Path) -> bool:
