@@ -1141,6 +1141,7 @@ class DialogueBoxBuilder:
             model_cache.mkdir(parents=True, exist_ok=True)
             self._sentiment_analyzer = pipeline(
                 "sentiment-analysis",
+                device=-1,
                 model=SENTIMENT_MODEL_PATH,
                 tokenizer=SENTIMENT_MODEL_PATH,
                 model_kwargs={"cache_dir": str(model_cache)},
@@ -1449,6 +1450,7 @@ class DialogueBoxBuilder:
                     text=comment.text_content,
                     evidence_path=comment.evidence_path,
                     manual_score=comment.score,
+                    allow_objection=i > 0,
                 )
             )
 
@@ -1493,6 +1495,7 @@ class DialogueBoxBuilder:
         text: str,
         evidence_path: str = None,
         manual_score: float = 0,
+        allow_objection: bool = True,
     ):
         self.current_character_name = character
         this_char_data = self.character_data["characters"][character]
@@ -1513,7 +1516,8 @@ class DialogueBoxBuilder:
             polarity_confidence = abs(manual_score)
 
         do_objection = (
-            (
+            allow_objection
+            and (
                 (polarity_type == "negative" and random() > 0.3)
                 or (polarity_type == "positive" and random() > 0.7)
             )

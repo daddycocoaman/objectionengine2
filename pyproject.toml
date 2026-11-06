@@ -1,6 +1,6 @@
 [project]
 name = "objectionengine2"
-version = "1.0.1"
+version = "1.0.2"
 description = "Independent continuation of Objection Engine for rendering Ace Attorney scenes"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
@@ -32,12 +32,20 @@ Original = "https://github.com/LuisMayo/objection_engine"
 sentiment = [
     "transformers>=4.55,<6",
     "torch>=2.8,<3",
-    "sentencepiece>=0.2,<0.3",
+    "sentencepiece>=0.2,<0.2.2",
     "protobuf>=5,<7",
 ]
 
 [dependency-groups]
 dev = ["pytest>=8.4,<10"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.pytest.ini_options]
 addopts = "-m 'not asset_integration'"

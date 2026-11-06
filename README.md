@@ -20,7 +20,7 @@ From a clone, sync the locked environment with `uv`:
 uv sync --python 3.14 --locked
 ```
 
-The package supports Python 3.10–3.14; `.python-version` selects 3.14 by default. To enable Hugging Face sentiment, add `--extra sentiment` to the run command, for example `uv run --locked --extra sentiment python examples/example_easy.py`. This downloads a model on first use into the same user cache under `models/`. The base installation does not need a model. Find the cache location with `uv run python -c 'from objectionengine2.cache import cache_path; print(cache_path())'`.
+The package supports Python 3.10–3.14; `.python-version` selects 3.14 by default. To enable Hugging Face sentiment, add `--extra sentiment` to the run command, for example `uv run --locked --extra sentiment python examples/example_easy.py`. For installations from PyPI, use `uv add --torch-backend cpu "objectionengine2[sentiment]"` to select CPU-only PyTorch; the CPU index setting in this checkout does not propagate to installed packages. This downloads a model on first use into the same user cache under `models/`. The base installation does not need a model. Find the cache location with `uv run python -c 'from objectionengine2.cache import cache_path; print(cache_path())'`.
 
 ## Render comments
 

@@ -76,3 +76,38 @@ def test_hugging_face_mode_explains_missing_extra(monkeypatch, tmp_path):
     monkeypatch.setattr(scenes, "models_path", lambda: tmp_path / "models")
     with pytest.raises(RuntimeError, match="optional 'sentiment' extra"):
         make_builder(monkeypatch)
+
+
+def test_first_comment_cannot_trigger_objection(monkeypatch):
+    from objectionengine2.beans.comment import Comment
+
+    builder = make_builder(monkeypatch)
+    builder.music_data = {"pwr": {"relaxed": ["a"], "tense": ["b"]}}
+    monkeypatch.setattr(builder, "get_characters_for_users", lambda *args, **kwargs: {"a": "phoenix"})
+    calls = []
+    monkeypatch.setattr(builder, "get_boxes_with_pauses", lambda **kwargs: calls.append(kwargs) or [])
+    builder.build_from_comments([Comment(user_id="a", text_content="First"), Comment(user_id="a", text_content="Second")])
+    assert [call["allow_objection"] for call in calls] == [False, True]
+
+
+def test_objection_decision_respects_opening_guard(monkeypatch):
+    builder = make_builder(monkeypatch)
+    builder.character_data = {"characters": {"phoenix": {"location": "left", "gender": "male", "sprites": {"negative": ["sad"]}}}}
+    builder.avoid_spoiler_sprites = False
+    builder.has_done_objection = False
+    monkeypatch.setattr(scenes, "random", lambda: 0.99)
+    monkeypatch.setattr(scenes, "split_sentences", lambda text: [text])
+    decisions = []
+
+    class StopAfterDecision(Exception):
+        pass
+
+    def capture(*args, **kwargs):
+        decisions.append(args[1])
+        raise StopAfterDecision
+
+    monkeypatch.setattr(builder, "initialize_box", capture)
+    for allowed in (False, True):
+        with pytest.raises(StopAfterDecision):
+            builder.get_boxes_with_pauses("Alex", "phoenix", "Bad", manual_score=-1, allow_objection=allowed)
+    assert decisions == [False, True]
