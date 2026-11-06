@@ -38,7 +38,7 @@ from .font_tools import get_best_font, get_text_width, split_sentences
 from .font_constants import TEXT_COLORS, FONT_ARRAY, NAMETAG_FONT_ARRAY, TextType
 from typing import Callable, Optional
 from os.path import exists, join
-from shlex import split
+from shlex import quote, split
 from math import cos, sin, pi
 from random import random
 from pathlib import Path
@@ -1181,7 +1181,7 @@ class DialogueBoxBuilder:
                     DialogueAction(f"wait 0.1", 0),
                     DialogueAction("music stop", 0) if go_to_tense_music else None,
                     DialogueAction(f"wait 1.2", 0),
-                    DialogueAction(f"music start {self.tense_track}", 0)
+                    DialogueAction(f"music start {quote(self.tense_track)}", 0)
                     if go_to_tense_music
                     else None,
                 ]
@@ -1434,7 +1434,7 @@ class DialogueBoxBuilder:
                         f"sprite left {Path(ASSETS_FOLDER, 'characters', 'phoenix', 'phoenix-normal-idle.gif').as_posix()}",
                         0,
                     ),
-                    DialogueAction(f"music start {self.relaxed_track}", 0),
+                    DialogueAction(f"music start {quote(self.relaxed_track)}", 0),
                 ]
             )
         )
